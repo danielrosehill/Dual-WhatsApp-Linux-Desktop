@@ -1,11 +1,28 @@
-# Dual WhatsApp for Linux Desktop
+# Dual WhatsApp Client for Linux Desktop
 
+![alt text](screenshots/1.png)
 
 ![AI Co-generated](https://img.shields.io/badge/AI%20Co--generated-blue?style=flat-square)
 
 ![Claude 3.5 Sonnet](https://img.shields.io/badge/Claude%203.5-Sonnet-blue?style=flat-square)
 
 ![Cline](https://img.shields.io/badge/Cline-blue?style=flat-square)
+
+## What This Is
+
+This wrapper is a wrapper and toggling application for two WhatsApp accounts that I created by prompting Sonnet using Cline. 
+
+Sign in to your Whatsapp accounts and you can easily toggle between the two
+
+It is also the ability to independently control notifications for both your personal and business WhatsApp accounts. I hope this feature will be useful for those who manage two accounts throughout the day.
+
+## Screenshots
+
+![alt text](screenshots/1.png)
+
+![alt text](screenshots/2.png)
+
+![alt text](screenshots/3.png)
 
 
 

@@ -5,7 +5,25 @@
   "main": "app/main.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "electron-builder build",
+    "build:linux": "electron-builder build --linux"
+  },
+  "build": {
+    "appId": "com.danielrosehill.dualwhatsapp",
+    "productName": "Dual WhatsApp",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "app/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Network",
+      "icon": "app/assets/icon.png"
+    }
   },
   "repository": {
     "type": "git",
@@ -26,7 +44,10 @@
   },
   "homepage": "https://github.com/danielrosehill/Dual-WhatsApp-Linux-Desktop#readme",
   "dependencies": {
-    "electron": "^34.0.2",
     "electron-store": "^10.0.1"
+  },
+  "devDependencies": {
+    "electron-builder": "^25.1.8",
+    "electron": "^34.0.2"
   }
 }
