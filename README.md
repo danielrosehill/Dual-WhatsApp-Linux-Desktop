@@ -35,6 +35,27 @@ npm install
 npm start
 ```
 
+## Project Structure
+
+```
+.
+├── app/                    # Application source files
+│   ├── assets/            # Application assets (icons)
+│   ├── main.js            # Electron main process
+│   ├── index.html         # Main application window
+│   ├── renderer.js        # Frontend logic
+│   └── styles.css         # Application styling
+├── package.json           # Project configuration
+└── README.md             # Documentation
+```
+
+## Development Notes
+
+- The application uses Electron's webview to embed WhatsApp Web instances
+- Each WhatsApp instance (Personal and Business) has its own persistent session
+- Settings are stored using electron-store
+- The application minimizes to system tray instead of closing
+
 ## Usage
 
 1. Launch the application using `npm start` or create a desktop shortcut

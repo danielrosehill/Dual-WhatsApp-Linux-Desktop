@@ -2,7 +2,7 @@
   "name": "dual-whatsapp-linux-desktop",
   "version": "1.0.0",
   "description": "A Linux desktop application for managing both personal and business WhatsApp accounts",
-  "main": "main.js",
+  "main": "app/main.js",
   "scripts": {
     "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1"
