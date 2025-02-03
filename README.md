@@ -1,30 +1,12 @@
 # Dual WhatsApp Client for Linux Desktop
 
-![alt text](screenshots/1.png)
+![Main Interface](screenshots/1.png)
 
 ![AI Co-generated](https://img.shields.io/badge/AI%20Co--generated-blue?style=flat-square)
-
 ![Claude 3.5 Sonnet](https://img.shields.io/badge/Claude%203.5-Sonnet-blue?style=flat-square)
-
 ![Cline](https://img.shields.io/badge/Cline-blue?style=flat-square)
 
 ## What This Is
-
-This wrapper is a wrapper and toggling application for two WhatsApp accounts that I created by prompting Sonnet using Cline. 
-
-Sign in to your Whatsapp accounts and you can easily toggle between the two
-
-It is also the ability to independently control notifications for both your personal and business WhatsApp accounts. I hope this feature will be useful for those who manage two accounts throughout the day.
-
-## Screenshots
-
-![alt text](screenshots/1.png)
-
-![alt text](screenshots/2.png)
-
-![alt text](screenshots/3.png)
-
-
 
 A Linux desktop application that allows you to use both Personal and Business WhatsApp accounts simultaneously. Built specifically for Linux with KDE Plasma integration, but works on other desktop environments as well.
 
@@ -38,59 +20,34 @@ A Linux desktop application that allows you to use both Personal and Business Wh
 - Settings management for notifications
 - Automatic hiding of WhatsApp download banners
 
-## Requirements
-
-- Linux (tested on OpenSUSE Tumbleweed with KDE Plasma)
-- Node.js and npm
-
 ## Installation
 
-1. Clone this repository:
+Download the latest AppImage from the releases page and make it executable:
+
 ```bash
-git clone https://github.com/danielrosehill/Dual-WhatsApp-Linux-Desktop.git
-cd Dual-WhatsApp-Linux-Desktop
+chmod +x Dual-WhatsApp-*.AppImage
 ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+Then simply run the AppImage to launch the application.
 
-3. Start the application:
-```bash
-npm start
-```
+## Screenshots Gallery
 
-## Project Structure
-
-```
-.
-├── app/                    # Application source files
-│   ├── assets/            # Application assets (icons)
-│   ├── main.js            # Electron main process
-│   ├── index.html         # Main application window
-│   ├── renderer.js        # Frontend logic
-│   └── styles.css         # Application styling
-├── package.json           # Project configuration
-└── README.md             # Documentation
-```
-
-## Development Notes
-
-- The application uses Electron's webview to embed WhatsApp Web instances
-- Each WhatsApp instance (Personal and Business) has its own persistent session
-- Settings are stored using electron-store
-- The application minimizes to system tray instead of closing
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0;">
+    <img src="screenshots/1.png" alt="Main Interface" style="width: 100%;">
+    <img src="screenshots/2.png" alt="Settings View" style="width: 100%;">
+    <img src="screenshots/3.png" alt="System Tray Integration" style="width: 100%;">
+    <img src="screenshots/4.png" alt="Notification Controls" style="width: 100%;">
+</div>
 
 ## Usage
 
-1. Launch the application using `npm start` or create a desktop shortcut
+1. Launch the application by running the AppImage
 2. Sign in to your Personal WhatsApp account in the left tab
 3. Sign in to your Business WhatsApp account in the right tab
 4. Use the settings gear icon to configure notification preferences
 5. Minimize to system tray by clicking the close button
 
-## Development
+## Development Notes
 
 The application is built using:
 - Electron
