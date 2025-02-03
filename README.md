@@ -1,5 +1,14 @@
 # Dual WhatsApp for Linux Desktop
 
+
+![AI Co-generated](https://img.shields.io/badge/AI%20Co--generated-blue?style=flat-square)
+
+![Claude 3.5 Sonnet](https://img.shields.io/badge/Claude%203.5-Sonnet-blue?style=flat-square)
+
+![Cline](https://img.shields.io/badge/Cline-blue?style=flat-square)
+
+
+
 A Linux desktop application that allows you to use both Personal and Business WhatsApp accounts simultaneously. Built specifically for Linux with KDE Plasma integration, but works on other desktop environments as well.
 
 ## Features
