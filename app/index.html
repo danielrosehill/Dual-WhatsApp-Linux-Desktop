@@ -21,20 +21,28 @@
             
             <div class="tab-content">
                 <div class="tab-pane active" id="personal">
-                    <webview id="personalWebview" 
-                            src="https://web.whatsapp.com" 
-                            partition="persist:personal"
-                            allowpopups
-                            webpreferences="nodeIntegration=true"
-                            useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"></webview>
+                    <div class="loading-container loading" id="personalContainer">
+                        <div class="loading-spinner"></div>
+                        <webview id="personalWebview" 
+                                src="https://web.whatsapp.com" 
+                                partition="persist:whatsapp-personal"
+                                allowpopups
+                                preload="./preload.js"
+                                nodeintegration
+                                useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"></webview>
+                    </div>
                 </div>
                 <div class="tab-pane" id="business">
-                    <webview id="businessWebview" 
-                            src="https://web.whatsapp.com/business" 
-                            partition="persist:business"
-                            allowpopups
-                            webpreferences="nodeIntegration=true"
-                            useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"></webview>
+                    <div class="loading-container loading" id="businessContainer">
+                        <div class="loading-spinner"></div>
+                        <webview id="businessWebview" 
+                                src="https://business.web.whatsapp.com" 
+                                partition="persist:whatsapp-business"
+                                allowpopups
+                                preload="./preload.js"
+                                nodeintegration
+                                useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"></webview>
+                    </div>
                 </div>
             </div>
         </div>

@@ -14,30 +14,91 @@ const businessNotifications = document.getElementById('businessNotifications');
 
 // Initialize webviews with saved settings
 async function initializeWebviews() {
-    const settings = await ipcRenderer.invoke('get-settings');
-    
-    personalWebview.src = settings.personal.url;
-    businessWebview.src = settings.business.url;
-    
-    personalNotifications.checked = settings.personal.notifications;
-    businessNotifications.checked = settings.business.notifications;
-
-    // Set up webview notification handling
-    [personalWebview, businessWebview].forEach(webview => {
-        webview.addEventListener('dom-ready', () => {
-            // Inject CSS to hide the download banner
-            webview.insertCSS(`
-                [data-testid="banner-download-app"] {
-                    display: none !important;
+    console.log('Initializing webviews...');
+    try {
+        const settings = await ipcRenderer.invoke('get-settings');
+        
+        [personalWebview, businessWebview].forEach(webview => {
+            const container = document.getElementById(webview.id.replace('Webview', 'Container'));
+            
+            // Add loading event listeners
+            webview.addEventListener('did-start-loading', () => {
+                console.log(`${webview.id} started loading`);
+                container.classList.add('loading');
+            });
+            
+            webview.addEventListener('did-stop-loading', () => {
+                console.log(`${webview.id} finished loading`);
+                container.classList.remove('loading');
+                
+                // Check if the page loaded properly and handle outdated browser message
+                webview.executeJavaScript(`
+                    if (document.body.innerHTML.includes('Google Chrome 49+') || 
+                        document.body.innerHTML.includes('outdated')) {
+                        console.log('Detected outdated browser message, reloading...');
+                        window.location.reload();
+                    }
+                `);
+            });
+            
+            webview.addEventListener('did-fail-load', (e) => {
+                console.error(`${webview.id} failed to load:`, e.errorDescription, 'Error code:', e.errorCode);
+                container.classList.remove('loading');
+                
+                // Only retry on network errors or timeouts, ignore harmless errors
+                if (e.errorCode !== -3 && 
+                    (e.errorCode === -2 || // Failed to connect
+                     e.errorCode === -7 || // Timeout
+                     e.errorCode === -21)) { // Network changed
+                    console.log(`Retrying ${webview.id} in 3 seconds...`);
+                    setTimeout(() => {
+                        console.log(`Reloading ${webview.id}...`);
+                        webview.reload();
+                    }, 3000);
                 }
-            `);
-        });
+            });
+            
+            webview.addEventListener('dom-ready', () => {
+                // Inject CSS to hide the download banner and ensure proper display
+                webview.insertCSS(`
+                    [data-testid="banner-download-app"] {
+                        display: none !important;
+                    }
+                    body {
+                        height: 100vh !important;
+                        overflow: hidden !important;
+                    }
+                `);
+            });
+            
+            webview.addEventListener('console-message', (e) => {
+                console.log(`${webview.id} console:`, e.message);
+            });
 
-        webview.addEventListener('new-window', (e) => {
-            e.preventDefault();
-            webview.src = e.url;
+            // Add crash handler
+            webview.addEventListener('crashed', () => {
+                console.error(`${webview.id} crashed, reloading...`);
+                setTimeout(() => webview.reload(), 1000);
+            });
         });
-    });
+        
+        console.log('Setting webview sources...');
+        personalWebview.src = settings.personal.url;
+        businessWebview.src = settings.business.url;
+        
+        personalNotifications.checked = settings.personal.notifications;
+        businessNotifications.checked = settings.business.notifications;
+
+        // Add new-window event handler
+        [personalWebview, businessWebview].forEach(webview => {
+            webview.addEventListener('new-window', (e) => {
+                e.preventDefault();
+                webview.src = e.url;
+            });
+        });
+    } catch (error) {
+        console.error('Failed to initialize webviews:', error);
+    }
 }
 
 // Tab switching
@@ -72,16 +133,24 @@ saveSettingsBtn.addEventListener('click', async () => {
         },
         business: {
             notifications: businessNotifications.checked,
-            url: 'https://web.whatsapp.com/business'
+            url: 'https://business.web.whatsapp.com'
         }
     };
 
-    await ipcRenderer.invoke('save-settings', settings);
-    settingsModal.classList.remove('active');
+    try {
+        await ipcRenderer.invoke('save-settings', settings);
+        settingsModal.classList.remove('active');
 
-    // Reload webviews if notification settings changed
-    personalWebview.setAudioMuted(!settings.personal.notifications);
-    businessWebview.setAudioMuted(!settings.business.notifications);
+        // Reload webviews with new settings
+        personalWebview.setAudioMuted(!settings.personal.notifications);
+        businessWebview.setAudioMuted(!settings.business.notifications);
+        
+        // Reload webviews to apply new settings
+        personalWebview.reload();
+        businessWebview.reload();
+    } catch (error) {
+        console.error('Failed to save settings:', error);
+    }
 });
 
 // Initialize the app

@@ -21,12 +21,41 @@ function createWindow() {
       webviewTag: true,
       webSecurity: true,
       allowRunningInsecureContent: false,
-      experimentalFeatures: true
+      experimentalFeatures: true,
     },
     icon: path.join(__dirname, 'assets/icon.png')
   });
 
-  mainWindow.loadFile('index.html');
+  // Enable webview debugging and error handling
+  mainWindow.webContents.on('did-attach-webview', (event, webContents) => {
+    // Log webview errors
+    webContents.on('console-message', (event, level, message, line, sourceId) => {
+      console.log(`WebView Console [${level}]:`, message);
+      if (level >= 2) { // Warning or Error
+        console.error('Source:', sourceId, 'Line:', line);
+      }
+    });
+    
+    webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+      console.error('WebView Load Failed:', {
+        error: errorDescription,
+        code: errorCode,
+        url: validatedURL
+      });
+    });
+
+    webContents.on('crashed', (event, killed) => {
+      console.error('WebView crashed:', killed ? 'killed' : 'crashed');
+      webContents.reload();
+    });
+
+    webContents.on('unresponsive', () => {
+      console.error('WebView became unresponsive');
+      webContents.reload();
+    });
+  });
+
+  mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   // Handle window minimize to tray
   mainWindow.on('minimize', (event) => {
@@ -97,25 +126,17 @@ ipcMain.handle('save-settings', async (event, settings) => {
 });
 
 ipcMain.handle('get-settings', async () => {
-  if (!store) return {
+  const defaultSettings = {
     personal: {
       notifications: true,
       url: 'https://web.whatsapp.com'
     },
     business: {
       notifications: true,
-      url: 'https://web.whatsapp.com'
+      url: 'https://business.web.whatsapp.com'
     }
   };
   
-  return store.get('settings', {
-    personal: {
-      notifications: true,
-      url: 'https://web.whatsapp.com'
-    },
-    business: {
-      notifications: true,
-      url: 'https://web.whatsapp.com'
-    }
-  });
+  if (!store) return defaultSettings;
+  return store.get('settings', defaultSettings);
 });
