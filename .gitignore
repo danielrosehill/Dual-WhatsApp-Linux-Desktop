@@ -40,3 +40,4 @@ Thumbs.db
 .electron-store/
 *.log
 node_modules
+/node_modules
