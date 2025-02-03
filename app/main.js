@@ -133,7 +133,7 @@ ipcMain.handle('get-settings', async () => {
     },
     business: {
       notifications: true,
-      url: 'https://business.web.whatsapp.com'
+      url: 'https://web.whatsapp.com'
     }
   };
   
