@@ -1,4 +1,4 @@
-# Dependencies
+e# Dependencies
 node_modules/
 npm-debug.log
 yarn-debug.log
@@ -39,3 +39,4 @@ Thumbs.db
 # Application specific
 .electron-store/
 *.log
+node_modules
