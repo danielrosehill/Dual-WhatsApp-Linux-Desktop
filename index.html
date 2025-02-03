@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dual WhatsApp</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab="personal">
+                    <span class="indicator personal"></span>
+                    Personal WhatsApp
+                </button>
+                <button class="tab-button" data-tab="business">
+                    <span class="indicator business"></span>
+                    Business WhatsApp
+                </button>
+                <button class="settings-button" id="settingsBtn">⚙️ Settings</button>
+            </div>
+            
+            <div class="tab-content">
+                <div class="tab-pane active" id="personal">
+                    <webview id="personalWebview" 
+                            src="https://web.whatsapp.com" 
+                            partition="persist:personal"
+                            allowpopups
+                            webpreferences="nodeIntegration=true"
+                            useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"></webview>
+                </div>
+                <div class="tab-pane" id="business">
+                    <webview id="businessWebview" 
+                            src="https://web.whatsapp.com/business" 
+                            partition="persist:business"
+                            allowpopups
+                            webpreferences="nodeIntegration=true"
+                            useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"></webview>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-modal" id="settingsModal">
+            <div class="settings-content">
+                <h2>Settings</h2>
+                <div class="settings-section">
+                    <h3>Personal WhatsApp</h3>
+                    <label>
+                        <input type="checkbox" id="personalNotifications" checked>
+                        Enable Notifications
+                    </label>
+                </div>
+                <div class="settings-section">
+                    <h3>Business WhatsApp</h3>
+                    <label>
+                        <input type="checkbox" id="businessNotifications" checked>
+                        Enable Notifications
+                    </label>
+                </div>
+                <div class="settings-buttons">
+                    <button id="saveSettings">Save</button>
+                    <button id="closeSettings">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="renderer.js"></script>
+</body>
+</html>
