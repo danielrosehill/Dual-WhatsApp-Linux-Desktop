@@ -23,25 +23,39 @@
                 <div class="tab-pane active" id="personal">
                     <div class="loading-container loading" id="personalContainer">
                         <div class="loading-spinner"></div>
+                        <div class="error-overlay" id="personalError" style="display: none;">
+                            <div class="error-message">
+                                <h3>Connection Error</h3>
+                                <p>Failed to load WhatsApp. Please check your internet connection.</p>
+                                <button class="retry-button" onclick="document.getElementById('personalWebview').reload()">Retry</button>
+                            </div>
+                        </div>
                         <webview id="personalWebview" 
                                 src="https://web.whatsapp.com" 
                                 partition="persist:whatsapp-personal"
                                 allowpopups
                                 preload="./preload.js"
                                 nodeintegration
-                                useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"></webview>
+                                useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"></webview>
                     </div>
                 </div>
                 <div class="tab-pane" id="business">
                     <div class="loading-container loading" id="businessContainer">
                         <div class="loading-spinner"></div>
+                        <div class="error-overlay" id="businessError" style="display: none;">
+                            <div class="error-message">
+                                <h3>Connection Error</h3>
+                                <p>Failed to load WhatsApp Business. Please check your internet connection.</p>
+                                <button class="retry-button" onclick="document.getElementById('businessWebview').reload()">Retry</button>
+                            </div>
+                        </div>
                         <webview id="businessWebview" 
-                                src="https://web.whatsapp.com" 
+                                src="https://business.web.whatsapp.com" 
                                 partition="persist:whatsapp-business"
                                 allowpopups
                                 preload="./preload.js"
                                 nodeintegration
-                                useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"></webview>
+                                useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"></webview>
                     </div>
                 </div>
             </div>
@@ -64,11 +78,22 @@
                         Enable Notifications
                     </label>
                 </div>
+                <div class="settings-section">
+                    <h3>Application</h3>
+                    <button id="clearCache" class="secondary-button">Clear Cache</button>
+                    <button id="restartApp" class="secondary-button">Restart App</button>
+                </div>
                 <div class="settings-buttons">
                     <button id="saveSettings">Save</button>
                     <button id="closeSettings">Cancel</button>
                 </div>
             </div>
+        </div>
+        
+        <div class="notification-banner" id="memoryWarning" style="display: none;">
+            <p>High memory usage detected. Consider restarting the app.</p>
+            <button id="dismissMemoryWarning">Dismiss</button>
+            <button id="restartForMemory">Restart Now</button>
         </div>
     </div>
     <script src="renderer.js"></script>
