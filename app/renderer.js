@@ -11,6 +11,7 @@ const personalWebview = document.getElementById('personalWebview');
 const businessWebview = document.getElementById('businessWebview');
 const personalNotifications = document.getElementById('personalNotifications');
 const businessNotifications = document.getElementById('businessNotifications');
+const darkModeToggle = document.getElementById('darkMode');
 const clearCacheBtn = document.getElementById('clearCache');
 const restartAppBtn = document.getElementById('restartApp');
 const memoryWarning = document.getElementById('memoryWarning');
@@ -18,6 +19,8 @@ const dismissMemoryWarningBtn = document.getElementById('dismissMemoryWarning');
 const restartForMemoryBtn = document.getElementById('restartForMemory');
 const personalError = document.getElementById('personalError');
 const businessError = document.getElementById('businessError');
+const personalErrorText = document.getElementById('personalErrorText');
+const businessErrorText = document.getElementById('businessErrorText');
 
 // Track reload attempts to prevent infinite loops
 const reloadAttempts = {
@@ -33,10 +36,15 @@ function resetReloadAttempts(webviewId) {
     reloadAttempts[webviewId] = 0;
 }
 
-// Show error overlay
-function showErrorOverlay(webviewId) {
+// Show error overlay with custom message
+function showErrorOverlay(webviewId, message = null) {
     const errorElement = webviewId === 'personalWebview' ? personalError : businessError;
+    const errorTextElement = webviewId === 'personalWebview' ? personalErrorText : businessErrorText;
+    
     if (errorElement) {
+        if (message && errorTextElement) {
+            errorTextElement.textContent = message;
+        }
         errorElement.style.display = 'flex';
     }
 }
@@ -48,6 +56,83 @@ function hideErrorOverlay(webviewId) {
         errorElement.style.display = 'none';
     }
 }
+
+// Network status tracking
+let isOnline = navigator.onLine;
+
+// Offline mode handler
+function tryOfflineMode(type) {
+    const webview = type === 'personal' ? personalWebview : businessWebview;
+    const errorTextElement = type === 'personal' ? personalErrorText : businessErrorText;
+    
+    console.log(`Attempting to load ${type} WhatsApp in offline mode...`);
+    
+    // Try to access cached content
+    webview.executeJavaScript(`
+        // Check if service worker is active
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            console.log('Service worker is active, trying to load cached content');
+            // Force the service worker to respond with cached content
+            window.location.reload();
+            true;
+        } else {
+            console.log('No service worker available');
+            false;
+        }
+    `).then(result => {
+        if (!result) {
+            errorTextElement.textContent = 'Offline mode not available. Please try again when you have an internet connection.';
+        } else {
+            // Give it some time to load cached content
+            setTimeout(() => {
+                // Check if content loaded from cache
+                webview.executeJavaScript(`
+                    document.querySelector('[data-testid="chat-list"] > div') !== null
+                `).then(hasContent => {
+                    if (!hasContent) {
+                        errorTextElement.textContent = 'Could not load cached content. Please connect to the internet and try again.';
+                    } else {
+                        hideErrorOverlay(webview.id);
+                    }
+                }).catch(err => {
+                    console.error('Error checking for cached content:', err);
+                });
+            }, 5000);
+        }
+    }).catch(err => {
+        console.error('Error trying offline mode:', err);
+        errorTextElement.textContent = 'Failed to enter offline mode. Please try again when you have an internet connection.';
+    });
+}
+
+// Network status change handlers
+window.addEventListener('online', () => {
+    console.log('Network connection restored');
+    isOnline = true;
+    
+    // Attempt to reload webviews if they were previously showing errors
+    if (personalError.style.display === 'flex') {
+        personalWebview.reload();
+    }
+    
+    if (businessError.style.display === 'flex') {
+        businessWebview.reload();
+    }
+});
+
+window.addEventListener('offline', () => {
+    console.log('Network connection lost');
+    isOnline = false;
+    
+    // Show appropriate message if webviews are currently loading
+    if (personalWebview.isLoading()) {
+        showErrorOverlay('personalWebview', 'Network connection lost. WhatsApp requires an internet connection to function properly.');
+    }
+    
+    if (businessWebview.isLoading()) {
+        showErrorOverlay('businessWebview', 'Network connection lost. WhatsApp requires an internet connection to function properly.');
+    }
+});
 
 // Safely reload a webview with attempt tracking
 function safeReload(webview) {
@@ -90,6 +175,155 @@ function setupMemoryManagement() {
     }, 30 * 60 * 1000); // 30 minutes
 }
 
+// Add session recovery mechanism
+function setupSessionRecovery() {
+    console.log('Setting up session recovery...');
+    
+    // Check webview health periodically
+    setInterval(() => {
+        [personalWebview, businessWebview].forEach(webview => {
+            if (webview && !webview.isDestroyed && webview.isDestroyed()) {
+                console.log(`${webview.id} is destroyed, attempting to recover...`);
+                
+                // Create a new webview element
+                const newWebview = document.createElement('webview');
+                newWebview.id = webview.id;
+                newWebview.src = webview.src;
+                newWebview.partition = webview.partition;
+                newWebview.allowpopups = true;
+                newWebview.preload = './preload.js';
+                newWebview.nodeintegration = true;
+                newWebview.useragent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+                
+                // Replace the old webview
+                webview.parentNode.replaceChild(newWebview, webview);
+                console.log(`${webview.id} has been recreated`);
+                
+                // Re-add event listeners
+                setupWebviewEventListeners(newWebview);
+            }
+        });
+    }, 60000); // Check every minute
+}
+
+// Extract webview event listeners setup to a separate function
+function setupWebviewEventListeners(webview) {
+    const container = document.getElementById(webview.id.replace('Webview', 'Container'));
+    
+    // Add loading event listeners
+    webview.addEventListener('did-start-loading', () => {
+        console.log(`${webview.id} started loading`);
+        container.classList.add('loading');
+        hideErrorOverlay(webview.id);
+    });
+    
+    webview.addEventListener('did-stop-loading', () => {
+        console.log(`${webview.id} finished loading`);
+        container.classList.remove('loading');
+        hideErrorOverlay(webview.id);
+        
+        // Reset reload attempts on successful load
+        resetReloadAttempts(webview.id);
+        
+        // Check if the page loaded properly and handle outdated browser message
+        webview.executeJavaScript(`
+            if (document.body.innerHTML.includes('Google Chrome 49+') || 
+                document.body.innerHTML.includes('outdated')) {
+                console.log('Detected outdated browser message, reloading...');
+                window.location.reload();
+            }
+        `).catch(err => {
+            console.error('Error executing JavaScript in webview:', err);
+        });
+    });
+    
+    webview.addEventListener('did-fail-load', (e) => {
+        console.error(`${webview.id} failed to load:`, e.errorDescription, 'Error code:', e.errorCode);
+        container.classList.remove('loading');
+        
+        // Only retry on network errors or timeouts, ignore harmless errors
+        if (e.errorCode !== -3 && 
+            (e.errorCode === -2 || // Failed to connect
+             e.errorCode === -7 || // Timeout
+             e.errorCode === -21)) { // Network changed
+            safeReload(webview);
+        } else if (!isOnline) {
+            tryOfflineMode(webview.id === 'personalWebview' ? 'personal' : 'business');
+        }
+    });
+    
+    webview.addEventListener('dom-ready', () => {
+        // Inject CSS to hide the download banner and ensure proper display
+        webview.insertCSS(`
+            [data-testid="banner-download-app"] {
+                display: none !important;
+            }
+            body {
+                height: 100vh !important;
+                overflow: hidden !important;
+            }
+        `).catch(err => {
+            console.error('Error inserting CSS into webview:', err);
+        });
+    });
+    
+    webview.addEventListener('console-message', (e) => {
+        console.log(`${webview.id} console:`, e.message);
+    });
+
+    // Add crash handler
+    webview.addEventListener('crashed', () => {
+        console.error(`${webview.id} crashed`);
+        safeReload(webview);
+    });
+    
+    // Add unresponsive handler
+    webview.addEventListener('unresponsive', () => {
+        console.error(`${webview.id} became unresponsive`);
+        safeReload(webview);
+    });
+    
+    // Add new-window event handler
+    webview.addEventListener('new-window', (e) => {
+        e.preventDefault();
+        // Only navigate to whitelisted domains
+        const url = new URL(e.url);
+        if (url.hostname.includes('whatsapp.com') || 
+            url.hostname.includes('web.whatsapp.com') || 
+            url.hostname.includes('business.web.whatsapp.com')) {
+            webview.src = e.url;
+        } else {
+            console.warn(`Blocked navigation to non-WhatsApp URL: ${e.url}`);
+        }
+    });
+}
+
+// Theme management
+function applyTheme(isDark) {
+    if (isDark) {
+        document.body.classList.remove('light-theme');
+    } else {
+        document.body.classList.add('light-theme');
+    }
+    
+    // Update webview CSS based on theme
+    [personalWebview, businessWebview].forEach(webview => {
+        if (webview && !webview.isDestroyed()) {
+            try {
+                const themeCSS = isDark ? 
+                    `body { color-scheme: dark; }` : 
+                    `body { color-scheme: light; }`;
+                
+                webview.insertCSS(themeCSS).catch(err => {
+                    console.error('Error applying theme to webview:', err);
+                });
+            } catch (error) {
+                console.error('Failed to apply theme to webview:', error);
+            }
+        }
+    });
+}
+
 // Initialize webviews with saved settings
 async function initializeWebviews() {
     console.log('Initializing webviews...');
@@ -98,81 +332,10 @@ async function initializeWebviews() {
         
         // Define correct URLs
         const personalUrl = 'https://web.whatsapp.com';
-        const businessUrl = 'https://business.web.whatsapp.com';
+        const businessUrl = 'https://web.whatsapp.com';
         
         [personalWebview, businessWebview].forEach(webview => {
-            const container = document.getElementById(webview.id.replace('Webview', 'Container'));
-            
-            // Add loading event listeners
-            webview.addEventListener('did-start-loading', () => {
-                console.log(`${webview.id} started loading`);
-                container.classList.add('loading');
-                hideErrorOverlay(webview.id);
-            });
-            
-            webview.addEventListener('did-stop-loading', () => {
-                console.log(`${webview.id} finished loading`);
-                container.classList.remove('loading');
-                hideErrorOverlay(webview.id);
-                
-                // Reset reload attempts on successful load
-                resetReloadAttempts(webview.id);
-                
-                // Check if the page loaded properly and handle outdated browser message
-                webview.executeJavaScript(`
-                    if (document.body.innerHTML.includes('Google Chrome 49+') || 
-                        document.body.innerHTML.includes('outdated')) {
-                        console.log('Detected outdated browser message, reloading...');
-                        window.location.reload();
-                    }
-                `).catch(err => {
-                    console.error('Error executing JavaScript in webview:', err);
-                });
-            });
-            
-            webview.addEventListener('did-fail-load', (e) => {
-                console.error(`${webview.id} failed to load:`, e.errorDescription, 'Error code:', e.errorCode);
-                container.classList.remove('loading');
-                
-                // Only retry on network errors or timeouts, ignore harmless errors
-                if (e.errorCode !== -3 && 
-                    (e.errorCode === -2 || // Failed to connect
-                     e.errorCode === -7 || // Timeout
-                     e.errorCode === -21)) { // Network changed
-                    safeReload(webview);
-                }
-            });
-            
-            webview.addEventListener('dom-ready', () => {
-                // Inject CSS to hide the download banner and ensure proper display
-                webview.insertCSS(`
-                    [data-testid="banner-download-app"] {
-                        display: none !important;
-                    }
-                    body {
-                        height: 100vh !important;
-                        overflow: hidden !important;
-                    }
-                `).catch(err => {
-                    console.error('Error inserting CSS into webview:', err);
-                });
-            });
-            
-            webview.addEventListener('console-message', (e) => {
-                console.log(`${webview.id} console:`, e.message);
-            });
-
-            // Add crash handler
-            webview.addEventListener('crashed', () => {
-                console.error(`${webview.id} crashed`);
-                safeReload(webview);
-            });
-            
-            // Add unresponsive handler
-            webview.addEventListener('unresponsive', () => {
-                console.error(`${webview.id} became unresponsive`);
-                safeReload(webview);
-            });
+            setupWebviewEventListeners(webview);
         });
         
         console.log('Setting webview sources...');
@@ -181,25 +344,17 @@ async function initializeWebviews() {
         
         personalNotifications.checked = settings.personal.notifications;
         businessNotifications.checked = settings.business.notifications;
-
-        // Add new-window event handler
-        [personalWebview, businessWebview].forEach(webview => {
-            webview.addEventListener('new-window', (e) => {
-                e.preventDefault();
-                // Only navigate to whitelisted domains
-                const url = new URL(e.url);
-                if (url.hostname.includes('whatsapp.com') || 
-                    url.hostname.includes('web.whatsapp.com') || 
-                    url.hostname.includes('business.web.whatsapp.com')) {
-                    webview.src = e.url;
-                } else {
-                    console.warn(`Blocked navigation to non-WhatsApp URL: ${e.url}`);
-                }
-            });
-        });
+        
+        // Apply theme settings
+        const isDarkMode = settings.app?.darkMode !== false; // Default to dark mode
+        darkModeToggle.checked = isDarkMode;
+        applyTheme(isDarkMode);
         
         // Setup memory management
         setupMemoryManagement();
+        
+        // Setup session recovery
+        setupSessionRecovery();
     } catch (error) {
         console.error('Failed to initialize webviews:', error);
     }
@@ -285,6 +440,11 @@ ipcRenderer.on('memory-warning', (event, memoryUsageMB) => {
     memoryWarning.style.display = 'flex';
 });
 
+// Theme toggle
+darkModeToggle.addEventListener('change', () => {
+    applyTheme(darkModeToggle.checked);
+});
+
 // Save settings
 saveSettingsBtn.addEventListener('click', async () => {
     const settings = {
@@ -294,7 +454,10 @@ saveSettingsBtn.addEventListener('click', async () => {
         },
         business: {
             notifications: businessNotifications.checked,
-            url: 'https://business.web.whatsapp.com'
+            url: 'https://web.whatsapp.com'
+        },
+        app: {
+            darkMode: darkModeToggle.checked
         }
     };
 
@@ -306,6 +469,9 @@ saveSettingsBtn.addEventListener('click', async () => {
         }
         
         settingsModal.classList.remove('active');
+
+        // Apply theme
+        applyTheme(darkModeToggle.checked);
 
         // Reload webviews with new settings
         personalWebview.setAudioMuted(!settings.personal.notifications);

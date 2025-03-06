@@ -26,8 +26,9 @@
                         <div class="error-overlay" id="personalError" style="display: none;">
                             <div class="error-message">
                                 <h3>Connection Error</h3>
-                                <p>Failed to load WhatsApp. Please check your internet connection.</p>
+                                <p id="personalErrorText">Failed to load WhatsApp. Please check your internet connection.</p>
                                 <button class="retry-button" onclick="document.getElementById('personalWebview').reload()">Retry</button>
+                                <button class="offline-button" onclick="tryOfflineMode('personal')">Try Offline Mode</button>
                             </div>
                         </div>
                         <webview id="personalWebview" 
@@ -45,12 +46,13 @@
                         <div class="error-overlay" id="businessError" style="display: none;">
                             <div class="error-message">
                                 <h3>Connection Error</h3>
-                                <p>Failed to load WhatsApp Business. Please check your internet connection.</p>
+                                <p id="businessErrorText">Failed to load WhatsApp Business. Please check your internet connection.</p>
                                 <button class="retry-button" onclick="document.getElementById('businessWebview').reload()">Retry</button>
+                                <button class="offline-button" onclick="tryOfflineMode('business')">Try Offline Mode</button>
                             </div>
                         </div>
                         <webview id="businessWebview" 
-                                src="https://business.web.whatsapp.com" 
+                                src="https://web.whatsapp.com" 
                                 partition="persist:whatsapp-business"
                                 allowpopups
                                 preload="./preload.js"
@@ -80,8 +82,14 @@
                 </div>
                 <div class="settings-section">
                     <h3>Application</h3>
-                    <button id="clearCache" class="secondary-button">Clear Cache</button>
-                    <button id="restartApp" class="secondary-button">Restart App</button>
+                    <label>
+                        <input type="checkbox" id="darkMode" checked>
+                        Dark Mode
+                    </label>
+                    <div class="button-group">
+                        <button id="clearCache" class="secondary-button">Clear Cache</button>
+                        <button id="restartApp" class="secondary-button">Restart App</button>
+                    </div>
                 </div>
                 <div class="settings-buttons">
                     <button id="saveSettings">Save</button>
